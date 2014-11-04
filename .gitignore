@@ -28,7 +28,8 @@ $RECYCLE.BIN/
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
+
 
 # Thumbnails
 ._*
@@ -43,3 +44,10 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
+/CarRental-ejb/build/
+/CarRental-lib/dist/
+/CarRental-lib/build/
+/CarRental-client/build/
+/CarRental/build/
+/CarRental-client/dist/
+/CarRental-ejb/dist/
