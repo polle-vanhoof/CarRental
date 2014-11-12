@@ -1,18 +1,32 @@
 package rental;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 
-public class Car {
-
+@Entity
+public class Car implements Serializable{
+    @Id
     private int id;
+    
+    @ManyToOne
     private CarType type;
+    
+    @OneToMany(cascade = CascadeType.REMOVE)
     private Set<Reservation> reservations;
 
     /***************
      * CONSTRUCTOR *
      ***************/
+    protected Car(){
+        
+    }
     
     public Car(int uid, CarType type) {
     	this.id = uid;
@@ -24,6 +38,7 @@ public class Car {
      * ID *
      ******/
     
+
     public int getId() {
     	return id;
     }

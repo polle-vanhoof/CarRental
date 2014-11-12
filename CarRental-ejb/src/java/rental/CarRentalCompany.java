@@ -1,5 +1,6 @@
 package rental;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -8,8 +9,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
-public class CarRentalCompany {
+@Entity
+public class CarRentalCompany{
 
     private static Logger logger = Logger.getLogger(CarRentalCompany.class.getName());
     private String name;
@@ -19,6 +24,9 @@ public class CarRentalCompany {
     /***************
      * CONSTRUCTOR *
      ***************/
+    protected CarRentalCompany(){
+        
+    }
     
     public CarRentalCompany(String name, List<Car> cars) {
         logger.log(Level.INFO, "<{0}> Car Rental Company {0} starting up...", name);
@@ -32,7 +40,7 @@ public class CarRentalCompany {
     /********
      * NAME *
      ********/
-    
+    @Id
     public String getName() {
         return name;
     }

@@ -22,6 +22,9 @@ public class CarType implements Serializable{
     /***************
      * CONSTRUCTOR *
      ***************/
+    protected CarType(){
+        
+    }
     
     public CarType(String name, int nbOfSeats, float trunkSpace, double rentalPricePerDay, boolean smokingAllowed) {
         this.name = name;
