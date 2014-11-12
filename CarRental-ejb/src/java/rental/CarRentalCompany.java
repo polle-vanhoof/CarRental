@@ -1,6 +1,5 @@
 package rental;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -9,16 +8,20 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.OneToMany;
 
 @Entity
 public class CarRentalCompany{
 
     private static Logger logger = Logger.getLogger(CarRentalCompany.class.getName());
+    @Id
     private String name;
+    @OneToMany(cascade = CascadeType.REMOVE)
     private List<Car> cars;
+    @OneToMany
     private Set<CarType> carTypes = new HashSet<CarType>();
 
     /***************
@@ -40,7 +43,6 @@ public class CarRentalCompany{
     /********
      * NAME *
      ********/
-    @Id
     public String getName() {
         return name;
     }
