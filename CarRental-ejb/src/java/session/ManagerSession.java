@@ -5,6 +5,9 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import rental.Car;
 import rental.CarRentalCompany;
 import rental.CarType;
@@ -13,10 +16,17 @@ import rental.Reservation;
 @Stateless
 public class ManagerSession implements ManagerSessionRemote {
     
+    @PersistenceContext
+    private EntityManager em;
+    
     @Override
     public Set<CarType> getCarTypes(String company) {
         try {
-            return new HashSet<CarType>(RentalStore.getRental(company).getAllTypes());
+            Query q = em.createQuery(
+                "SELECT ctype FROM CarRentalCompany crc JOIN crc.carTypes ctype "
+                +"WHERE crc.name= :company")
+                .setParameter("company", company);
+            return new HashSet<CarType>(q.getResultList());
         } catch (IllegalArgumentException ex) {
             Logger.getLogger(ManagerSession.class.getName()).log(Level.SEVERE, null, ex);
             return null;
@@ -25,22 +35,29 @@ public class ManagerSession implements ManagerSessionRemote {
 
     @Override
     public Set<Integer> getCarIds(String company, String type) {
-        Set<Integer> out = new HashSet<Integer>();
         try {
-            for(Car c: RentalStore.getRental(company).getCars(type)){
-                out.add(c.getId());
-            }
+            Query q = em.createQuery(
+                "SELECT c.id FROM CarRentalCompany crc JOIN crc.cars c "
+                +"WHERE c.type = :type AND crc.name = :company")
+                .setParameter("type", type)
+                .setParameter("company", company);
+            return new HashSet<Integer>(q.getResultList());
         } catch (IllegalArgumentException ex) {
             Logger.getLogger(ManagerSession.class.getName()).log(Level.SEVERE, null, ex);
             return null;
         }
-        return out;
     }
 
     @Override
     public int getNumberOfReservations(String company, String type, int id) {
         try {
-            return RentalStore.getRental(company).getCar(id).getReservations().size();
+            Query q = em.createQuery(
+            "SELECT COUNT(res.id) FROM CarRentalCompany crc JOIN crc.cars c JOIN c.reservations res "
+            + "WHERE crc.name = :company AND c.type = :type AND c.id = :id")
+            .setParameter("company", company)
+            .setParameter("type", type)
+            .setParameter("id", id);
+            return q.getFirstResult();
         } catch (IllegalArgumentException ex) {
             Logger.getLogger(ManagerSession.class.getName()).log(Level.SEVERE, null, ex);
             return 0;
@@ -49,24 +66,25 @@ public class ManagerSession implements ManagerSessionRemote {
 
     @Override
     public int getNumberOfReservations(String company, String type) {
-        Set<Reservation> out = new HashSet<Reservation>();
         try {
-            for(Car c: RentalStore.getRental(company).getCars(type)){
-                out.addAll(c.getReservations());
-            }
+            Query q = em.createQuery(
+            "SELECT COUNT(res.id) FROM CarRentalCompany crc JOIN crc.cars c JOIN c.reservations res "
+            + "WHERE crc.name = :company AND c.type = :type")
+            .setParameter("company", company)
+            .setParameter("type", type);
+            return q.getFirstResult();
         } catch (IllegalArgumentException ex) {
             Logger.getLogger(ManagerSession.class.getName()).log(Level.SEVERE, null, ex);
             return 0;
         }
-        return out.size();
     }
 
     @Override
     public int getNumberOfReservationsBy(String renter) {
-        Set<Reservation> out = new HashSet<Reservation>();
-        for(CarRentalCompany crc : RentalStore.getRentals().values()) {
-            out.addAll(crc.getReservationsBy(renter));
-        }
-        return out.size();
+        Query q = em.createQuery(
+            "SELECT COUNT(res.id) FROM Reservation res "
+            + "WHERE res.carRenter = :renter")
+            .setParameter("renter", renter);
+            return q.getFirstResult();
     }
 }
