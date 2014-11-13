@@ -8,10 +8,7 @@ import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import rental.Car;
-import rental.CarRentalCompany;
 import rental.CarType;
-import rental.Reservation;
 
 @Stateless
 public class ManagerSession implements ManagerSessionRemote {
