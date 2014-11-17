@@ -5,7 +5,15 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.annotation.Resource;
+import javax.ejb.SessionContext;
 import javax.ejb.Stateful;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import rental.CarRentalCompany;
 import rental.CarType;
 import rental.Quote;
 import rental.Reservation;
@@ -15,33 +23,51 @@ import rental.ReservationException;
 @Stateful
 public class CarRentalSession implements CarRentalSessionRemote {
 
+    @PersistenceContext
+    private EntityManager em;
+    
+    @Resource
+    private SessionContext context;
+
     private String renter;
     private List<Quote> quotes = new LinkedList<Quote>();
 
     @Override
     public Set<String> getAllRentalCompanies() {
-        return new HashSet<String>(RentalStore.getRentals().keySet());
+        try {
+            Query q = em.createQuery(
+                    "SELECT crc.name FROM CarRentalCompany crc");
+            return new HashSet<String>(q.getResultList());
+        } catch (IllegalArgumentException ex) {
+            Logger.getLogger(CarRentalSession.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
     }
-    
+
     @Override
     public List<CarType> getAvailableCarTypes(Date start, Date end) {
-        List<CarType> availableCarTypes = new LinkedList<CarType>();
-        for(String crc : getAllRentalCompanies()) {
-            for(CarType ct : RentalStore.getRentals().get(crc).getAvailableCarTypes(start, end)) {
-                if(!availableCarTypes.contains(ct))
-                    availableCarTypes.add(ct);
-            }
+        try {
+            Query q = em.createQuery(
+                    "SELECT ct FROM CarType ct WHERE ct.name NOT IN "
+                    + "(SELECT res.carType FROM Reservation res "
+                    + "WHERE res.startDate<=:end OR res.endDate>=:start)")
+                    .setParameter("start", start)
+                    .setParameter("end", end);
+            return new LinkedList<CarType>(q.getResultList());
+        } catch (IllegalArgumentException ex) {
+            Logger.getLogger(CarRentalSession.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
         }
-        return availableCarTypes;
     }
 
     @Override
     public Quote createQuote(String company, ReservationConstraints constraints) throws ReservationException {
         try {
-            Quote out = RentalStore.getRental(company).createQuote(constraints, renter);
+            CarRentalCompany crc = em.find(CarRentalCompany.class,company);
+            Quote out = crc.createQuote(constraints, renter);
             quotes.add(out);
             return out;
-        } catch(Exception e) {
+        } catch (Exception e) {
             throw new ReservationException(e);
         }
     }
@@ -56,11 +82,17 @@ public class CarRentalSession implements CarRentalSessionRemote {
         List<Reservation> done = new LinkedList<Reservation>();
         try {
             for (Quote quote : quotes) {
-                done.add(RentalStore.getRental(quote.getRentalCompany()).confirmQuote(quote));
+                CarRentalCompany crc = em.find(CarRentalCompany.class,quote.getRentalCompany());
+                Reservation res = crc.confirmQuote(quote);
+                em.persist(res);
+                done.add(res);
             }
         } catch (Exception e) {
-            for(Reservation r:done)
-                RentalStore.getRental(r.getRentalCompany()).cancelReservation(r);
+            context.setRollbackOnly();
+            for (Reservation r : done) {
+                CarRentalCompany crc = em.find(CarRentalCompany.class,r.getRentalCompany());
+                crc.cancelReservation(r);
+            }
             throw new ReservationException(e);
         }
         return done;
