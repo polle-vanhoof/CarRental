@@ -103,7 +103,7 @@ public class ManagerSession implements ManagerSessionRemote {
     }
     
     @Override
-    public void addCompany(String companyName, List<Integer> carIDs) {
+    public void addCompany(String companyName, List<Integer> carIDs){
         LinkedList<Car> cars = new LinkedList<Car>();
         
         for(int carID : carIDs){

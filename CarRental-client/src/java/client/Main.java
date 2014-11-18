@@ -18,6 +18,7 @@ import session.ManagerSessionRemote;
 
 public class Main extends AbstractScriptedTripTest<CarRentalSessionRemote, ManagerSessionRemote> {
 
+    private int nextuid = 0;
     public Main(String scriptFile) throws Exception {
         super(scriptFile);
         loadRental("Hertz","hertz.csv");
@@ -107,8 +108,6 @@ public class Main extends AbstractScriptedTripTest<CarRentalSessionRemote, Manag
 
         List<Integer> cars = new LinkedList<Integer>();
 
-        int nextuid = 0;
-
         //open file from jar
         BufferedReader in = new BufferedReader(new InputStreamReader(Main.class.getClassLoader().getResourceAsStream(datafile)));
         //while next line exists
@@ -132,6 +131,8 @@ public class Main extends AbstractScriptedTripTest<CarRentalSessionRemote, Manag
             for (int i = Integer.parseInt(csvReader.nextToken()); i > 0; i--) {
                 ms.addCar(nextuid, typeID);
                 cars.add(nextuid);
+                System.out.println(nextuid);
+                nextuid++;
             }
         }
 

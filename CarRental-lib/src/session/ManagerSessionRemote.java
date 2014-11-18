@@ -3,6 +3,7 @@ package session;
 import java.util.List;
 import java.util.Set;
 import javax.ejb.Remote;
+import javax.persistence.EntityExistsException;
 import rental.CarType;
 
 @Remote
