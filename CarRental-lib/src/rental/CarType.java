@@ -34,6 +34,10 @@ public class CarType implements Serializable{
         this.smokingAllowed = smokingAllowed;
     }
 
+    public int getID(){
+        return this.id;
+    }
+    
     public String getName() {
     	return name;
     }

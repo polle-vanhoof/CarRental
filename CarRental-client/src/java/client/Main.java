@@ -1,7 +1,15 @@
 package client;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.naming.InitialContext;
 import rental.CarType;
 import rental.ReservationConstraints;
@@ -10,8 +18,10 @@ import session.ManagerSessionRemote;
 
 public class Main extends AbstractScriptedTripTest<CarRentalSessionRemote, ManagerSessionRemote> {
 
-    public Main(String scriptFile) {
+    public Main(String scriptFile) throws Exception {
         super(scriptFile);
+        loadRental("Hertz","hertz.csv");
+        loadRental("Dockx", "dockx.csv");
     }
 
     public static void main(String[] args) throws Exception {
@@ -76,5 +86,55 @@ public class Main extends AbstractScriptedTripTest<CarRentalSessionRemote, Manag
     protected String getCheapestCarType(CarRentalSessionRemote session, Date start, Date end) throws Exception {
         System.err.println("To be implemented.");
         return null;
+    }
+    
+    
+    public void loadRental(String name, String datafile) throws Exception {
+        ManagerSessionRemote ms = getNewManagerSession("dummy", name);
+        Logger.getLogger(Main.class.getName()).log(Level.INFO, "loading {0} from file {1}", new Object[]{name, datafile});
+        try {
+            List<Integer> cars = loadData(ms, datafile);
+            ms.addCompany(name, cars);
+        } catch (NumberFormatException ex) {
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, "bad file", ex);
+        } catch (IOException ex) {
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public List<Integer> loadData(ManagerSessionRemote ms, String datafile)
+            throws NumberFormatException, IOException {
+
+        List<Integer> cars = new LinkedList<Integer>();
+
+        int nextuid = 0;
+
+        //open file from jar
+        BufferedReader in = new BufferedReader(new InputStreamReader(Main.class.getClassLoader().getResourceAsStream(datafile)));
+        //while next line exists
+        while (in.ready()) {
+            //read line
+            String line = in.readLine();
+            //if comment: skip
+            if (line.startsWith("#")) {
+                continue;
+            }
+            //tokenize on ,
+            StringTokenizer csvReader = new StringTokenizer(line, ",");
+            //create new car type from first 5 fields
+            CarType type = new CarType(csvReader.nextToken(),
+                    Integer.parseInt(csvReader.nextToken()),
+                    Float.parseFloat(csvReader.nextToken()),
+                    Double.parseDouble(csvReader.nextToken()),
+                    Boolean.parseBoolean(csvReader.nextToken()));
+            //create N new cars with given type, where N is the 5th field
+            int typeID = ms.addCarType(type);
+            for (int i = Integer.parseInt(csvReader.nextToken()); i > 0; i--) {
+                ms.addCar(nextuid, typeID);
+                cars.add(nextuid);
+            }
+        }
+
+        return cars;
     }
 }

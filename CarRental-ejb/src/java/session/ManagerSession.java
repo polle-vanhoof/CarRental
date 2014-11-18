@@ -1,6 +1,8 @@
 package session;
 
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -8,6 +10,8 @@ import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import rental.Car;
+import rental.CarRentalCompany;
 import rental.CarType;
 
 @Stateless
@@ -84,4 +88,31 @@ public class ManagerSession implements ManagerSessionRemote {
             .setParameter("renter", renter);
             return q.getFirstResult();
     }
+
+    @Override
+    public int addCarType(CarType carType){
+        em.persist(carType);
+        return carType.getID();
+    }
+    
+    @Override 
+    public void addCar(int carID, int typeID){
+        CarType type = em.find(CarType.class, typeID);
+        Car car = new Car(carID, type);
+        em.persist(car);
+    }
+    
+    @Override
+    public void addCompany(String companyName, List<Integer> carIDs) {
+        LinkedList<Car> cars = new LinkedList<Car>();
+        
+        for(int carID : carIDs){
+            cars.add(em.find(Car.class, carID));
+        }
+        
+        CarRentalCompany company = new CarRentalCompany(companyName, cars);
+        em.persist(company);
+    }
+    
+    
 }
