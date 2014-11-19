@@ -111,6 +111,25 @@ public class ManagerSession implements ManagerSessionRemote {
         LinkedList<CarType> result = new LinkedList<CarType>(q2.getResultList());
         return result.getFirst();
     }
+    
+    @Override
+    public Set<String> getBestClients(){
+        Query q = em.createQuery(
+                "SELECT COUNT(res.carRenter) FROM Reservation res "
+                +"GROUP BY (res.carRenter) "
+                +"ORDER BY COUNT(res.carRenter) DESC");
+        LinkedList<Long> orderedClients = new LinkedList<Long>(q.getResultList());
+        
+        Long maxReservations = orderedClients.getFirst();
+        
+        q = em.createQuery(
+                "SELECT res.carRenter FROM Reservation res "
+                +"WHERE (SELECT COUNT(res.carRenter) FROM Reservation r WHERE res.carRenter = r.carRenter) = :maxReservations")
+                .setParameter("maxReservations", maxReservations);
+        
+        HashSet<String> bestClients = new HashSet<String>(q.getResultList());
+        return bestClients;
+    }
 
     @Override
     public int addCarType(CarType carType){

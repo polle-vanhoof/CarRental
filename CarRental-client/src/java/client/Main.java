@@ -78,8 +78,7 @@ public class Main extends AbstractScriptedTripTest<CarRentalSessionRemote, Manag
 
     @Override
     protected Set<String> getBestClients(ManagerSessionRemote ms) throws Exception {
-        System.err.println("To be implemented.");
-        return null;
+        return ms.getBestClients();
     }
 
     @Override
