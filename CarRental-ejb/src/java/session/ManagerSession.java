@@ -53,12 +53,13 @@ public class ManagerSession implements ManagerSessionRemote {
     public int getNumberOfReservations(String company, String type, int id) {
         try {
             Query q = em.createQuery(
-            "SELECT COUNT(res.id) FROM CarRentalCompany crc JOIN crc.cars c JOIN c.reservations res "
-            + "WHERE crc.name = :company AND c.type = :type AND c.id = :id")
+            "SELECT res.id FROM CarRentalCompany crc JOIN crc.cars c JOIN c.reservations res "
+            + "WHERE crc.name = :company AND c.type.name = :type AND c.id = :id")
             .setParameter("company", company)
             .setParameter("type", type)
             .setParameter("id", id);
-            return q.getFirstResult();
+            int reservations = q.getResultList().size();
+            return reservations;
         } catch (IllegalArgumentException ex) {
             Logger.getLogger(ManagerSession.class.getName()).log(Level.SEVERE, null, ex);
             return 0;
@@ -69,11 +70,12 @@ public class ManagerSession implements ManagerSessionRemote {
     public int getNumberOfReservations(String company, String type) {
         try {
             Query q = em.createQuery(
-            "SELECT COUNT(res.id) FROM CarRentalCompany crc JOIN crc.cars c JOIN c.reservations res "
-            + "WHERE crc.name = :company AND c.type = :type")
+            "SELECT res.id FROM CarRentalCompany crc JOIN crc.cars c JOIN c.reservations res "
+            + "WHERE crc.name = :company AND c.type.name = :type")
             .setParameter("company", company)
             .setParameter("type", type);
-            return q.getFirstResult();
+            int reservations = q.getResultList().size();
+            return reservations;
         } catch (IllegalArgumentException ex) {
             Logger.getLogger(ManagerSession.class.getName()).log(Level.SEVERE, null, ex);
             return 0;
@@ -83,10 +85,24 @@ public class ManagerSession implements ManagerSessionRemote {
     @Override
     public int getNumberOfReservationsBy(String renter) {
         Query q = em.createQuery(
-            "SELECT COUNT(res.id) FROM Reservation res "
+            "SELECT res.id FROM Reservation res "
             + "WHERE res.carRenter = :renter")
             .setParameter("renter", renter);
-            return q.getFirstResult();
+            int reservations = q.getResultList().size();
+            return reservations;
+    }
+    
+    @Override
+    public CarType getMostPopularCarTypeIn(String crc) {
+        Query q = em.createQuery(
+            "SELECT ctype, COUNT(*) FROM Reservation res "
+            + "WHERE res.rentalCompany = :company " 
+            + "GROUP BY ctype "
+            + "ORDER BY COUNT(*) DESC")
+            .setParameter("company", crc);
+        LinkedList<CarType> orderedTypes = new LinkedList<CarType>(q.getResultList());
+            CarType type = orderedTypes.getFirst();
+            return type;
     }
 
     @Override
@@ -113,6 +129,8 @@ public class ManagerSession implements ManagerSessionRemote {
         CarRentalCompany company = new CarRentalCompany(companyName, cars);
         em.persist(company);
     }
+
+
     
     
 }

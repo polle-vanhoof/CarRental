@@ -73,8 +73,7 @@ public class Main extends AbstractScriptedTripTest<CarRentalSessionRemote, Manag
 
     @Override
     protected CarType getMostPopularCarTypeIn(ManagerSessionRemote ms, String carRentalCompanyName) throws Exception {
-        System.err.println("To be implemented.");
-        return null;
+        return ms.getMostPopularCarTypeIn(carRentalCompanyName);
     }
 
     @Override
@@ -131,7 +130,6 @@ public class Main extends AbstractScriptedTripTest<CarRentalSessionRemote, Manag
             for (int i = Integer.parseInt(csvReader.nextToken()); i > 0; i--) {
                 ms.addCar(nextuid, typeID);
                 cars.add(nextuid);
-                System.out.println(nextuid);
                 nextuid++;
             }
         }
