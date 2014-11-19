@@ -95,14 +95,21 @@ public class ManagerSession implements ManagerSessionRemote {
     @Override
     public CarType getMostPopularCarTypeIn(String crc) {
         Query q = em.createQuery(
-            "SELECT ctype, COUNT(*) FROM Reservation res "
-            + "WHERE res.rentalCompany = :company " 
-            + "GROUP BY ctype "
-            + "ORDER BY COUNT(*) DESC")
+            "SELECT res.carType FROM Reservation res "
+            +"WHERE res.rentalCompany = :company "
+            +"GROUP BY (res.carType) "
+            +"ORDER BY COUNT(res.carType) DESC")
             .setParameter("company", crc);
-        LinkedList<CarType> orderedTypes = new LinkedList<CarType>(q.getResultList());
-            CarType type = orderedTypes.getFirst();
-            return type;
+        LinkedList<String> orderedTypes = new LinkedList<String>(q.getResultList());
+        
+        String typeAsString = orderedTypes.getFirst();
+        
+        Query q2 = em.createQuery(
+                "SELECT ctype FROM CarType ctype "
+                +"WHERE ctype.name = :typeName")
+                .setParameter("typeName", typeAsString);
+        LinkedList<CarType> result = new LinkedList<CarType>(q2.getResultList());
+        return result.getFirst();
     }
 
     @Override

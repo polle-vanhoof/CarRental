@@ -24,4 +24,6 @@ public interface ManagerSessionRemote {
     public int addCarType(CarType carType);
     
     public void addCar(int carID, int typeID);
+    
+    public CarType getMostPopularCarTypeIn(String crc);
 }
