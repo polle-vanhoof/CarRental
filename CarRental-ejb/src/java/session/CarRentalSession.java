@@ -25,7 +25,7 @@ public class CarRentalSession implements CarRentalSessionRemote {
 
     @PersistenceContext
     private EntityManager em;
-    
+
     @Resource
     private SessionContext context;
 
@@ -48,8 +48,8 @@ public class CarRentalSession implements CarRentalSessionRemote {
     public List<CarType> getAvailableCarTypes(Date start, Date end) {
         try {
             Query q = em.createQuery(
-                    "SELECT ct FROM CarType ct WHERE ct.name NOT IN "
-                    + "(SELECT res.carType FROM Reservation res "
+                    "SELECT DISTINCT c.type FROM CarRentalCompany crc JOIN crc.cars c WHERE c.id NOT IN "
+                    + "(SELECT res.carId FROM Reservation res "
                     + "WHERE res.startDate<=:end OR res.endDate>=:start)")
                     .setParameter("start", start)
                     .setParameter("end", end);
@@ -60,10 +60,22 @@ public class CarRentalSession implements CarRentalSessionRemote {
         }
     }
 
+    public String getCheapestCarType(Date start, Date end) {
+        Query q = em.createQuery(
+                "SELECT DISTINCT c.type FROM CarRentalCompany crc JOIN crc.cars c JOIN c.type ct WHERE c.id NOT IN "
+                + "(SELECT res.carId FROM Reservation res "
+                + "WHERE res.startDate<=:end OR res.endDate>=:start)"
+                + "ORDER BY ct.rentalPricePerDay ASC")
+                .setParameter("start", start)
+                .setParameter("end", end);
+        LinkedList<CarType> orderedTypes = new LinkedList<CarType>(q.getResultList());
+        return orderedTypes.getFirst().getName();
+    }
+
     @Override
     public Quote createQuote(String company, ReservationConstraints constraints) throws ReservationException {
         try {
-            CarRentalCompany crc = em.find(CarRentalCompany.class,company);
+            CarRentalCompany crc = em.find(CarRentalCompany.class, company);
             Quote out = crc.createQuote(constraints, renter);
             quotes.add(out);
             return out;
@@ -82,7 +94,7 @@ public class CarRentalSession implements CarRentalSessionRemote {
         List<Reservation> done = new LinkedList<Reservation>();
         try {
             for (Quote quote : quotes) {
-                CarRentalCompany crc = em.find(CarRentalCompany.class,quote.getRentalCompany());
+                CarRentalCompany crc = em.find(CarRentalCompany.class, quote.getRentalCompany());
                 Reservation res = crc.confirmQuote(quote);
                 em.persist(res);
                 done.add(res);
@@ -90,7 +102,7 @@ public class CarRentalSession implements CarRentalSessionRemote {
         } catch (Exception e) {
             context.setRollbackOnly();
             for (Reservation r : done) {
-                CarRentalCompany crc = em.find(CarRentalCompany.class,r.getRentalCompany());
+                CarRentalCompany crc = em.find(CarRentalCompany.class, r.getRentalCompany());
                 crc.cancelReservation(r);
             }
             throw new ReservationException(e);
